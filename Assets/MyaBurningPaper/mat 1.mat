@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: mat
+  m_Name: mat 1
   m_Shader: {fileID: 4800000, guid: 95020c0f118ad9d49b92e16b22722f18, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: SMOOTHRANGE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 1
@@ -80,9 +80,9 @@ Material:
     - _Dissolve: 0.125
     - _DstBlend: 0
     - _EmberRange: 0.293
-    - _Fancy: 0
+    - _Fancy: 1
     - _FireOffset: 0
-    - _FireRange: 0.398
+    - _FireRange: 0.797
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
