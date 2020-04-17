@@ -7,6 +7,7 @@ Shader "Mya/Effect/BurningPaper"
 {
     Properties
     {
+        _Color("Color" , Color) = (1,1,1,1)
         _MainTex ("Texture", 2D) = "white" {}
         _AshTex ("Ash Texture", 2D) = "white" {}
         _NoiseMap("Noise" , 2D) = "black"{}
@@ -15,7 +16,7 @@ Shader "Mya/Effect/BurningPaper"
         _Blend("Blend" , Range(0,1)) = 0
          [hdr]_RangeColor("Range Color" , Color) = (1,0,0,1)
         _Range("Range" , Range(0.01,0.5)) = 0.1
-        _FireRange("Fire Range" , Range(0,0.5)) = 0.2
+        _FireRange("Fire Range" , Range(0,1)) = 0.2
         _FireOffset("Fire Offset" , Range(0,1)) = 0
         [hdr]_SparkColor("Spark Color" , Color) = (1,0,0,1)
         _AshRange("Ash Range" , Range(0,1)) = 0.1
@@ -23,6 +24,8 @@ Shader "Mya/Effect/BurningPaper"
 
         _NoiseMap2("Noise2" , 2D) = "black"{}
         _VertOffset("Vert Offset" , Range(0,1))    = 0.1
+
+        [Toggle(SMOOTHRANGE)] _Fancy ("Smooth Range?", Float) = 0
         
     }
     SubShader
@@ -37,7 +40,7 @@ Shader "Mya/Effect/BurningPaper"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-
+            #pragma shader_feature SMOOTHRANGE
             #include "UnityCG.cginc"
 
             struct appdata
@@ -53,6 +56,7 @@ Shader "Mya/Effect/BurningPaper"
                 float4 vertex   : SV_POSITION;
             };
 
+            fixed4      _Color;
             sampler2D   _MainTex;
             float4      _MainTex_ST;
             sampler2D   _AshTex;
@@ -93,7 +97,22 @@ Shader "Mya/Effect/BurningPaper"
 
                 return o;
             }
-
+            half Pow2(half x)
+            {
+                return x*x;
+            }
+            half ReMap(half range, half offset , half val)
+            {
+            #if SMOOTHRANGE
+                //Range(10-0)
+                range = 10*(1 -range);
+                return Pow2(max(0, 1 - Pow2(range*val + 2*val - range*offset - 1)));
+            #else
+                //Range(0.5-0.1)
+                range = 0.1 + range * 0.4;
+                return max(0 , 1 - abs(val - (offset *(1-range*2)+ range)) /range) ;
+            #endif
+            }
 
             fixed4 frag (v2f i) : SV_Target
             {
@@ -113,13 +132,14 @@ Shader "Mya/Effect/BurningPaper"
                 fixed3 spark =(smoothstep(0.8,1, noise)) * _SparkColor;
 
                 //火焰
-                float3 burnRange = max(0 , 1 - abs(blendValue - (_FireOffset *(1-_FireRange*2)+ _FireRange)) /_FireRange) * _RangeColor;
+                //float3 burnRange = max(0 , 1 - abs(blendValue - (_FireOffset *(1-_FireRange*2)+ _FireRange)) /_FireRange) * _RangeColor;
+                float3 burnRange = ReMap(_FireRange , _FireOffset, blendValue) * _RangeColor;
 
                 //消散
                 clip(col.a * (i.uv.x+ noise * _Range)  -  (_Blend  -  _Range -_AshRange)) ;
 
                 //混合
-                col.rgb = lerp(colAsh + spark, col ,  blendValue) + burnRange;
+                col.rgb = lerp(colAsh + spark, col ,  blendValue)*_Color + burnRange;
 
                 return col;
             }
